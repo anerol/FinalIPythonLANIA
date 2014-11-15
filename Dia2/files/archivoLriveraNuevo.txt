@@ -1,0 +1,2 @@
+Este es el texto del archivo Nuevo Lrivera
+Contiene dos lineas de texto.
