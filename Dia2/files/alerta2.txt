@@ -1,0 +1,58 @@
+import android
+import time
+import geo_distance
+
+#!adb forward tcp:9999 tcp:49762
+droid = android.Android()
+
+def getLocation():    
+    droid.startLocating()
+    event = droid.eventWaitFor('location',10000).result
+    if event != None:
+        if event['name'] == "location":
+            try:
+                lat = str(event['data']['gps']['latitude'])
+                lng = str(event['data']['gps']['longitude'])
+                loc = {"tipo":"gps", "latitud": lat, "longitud": lng}
+            except KeyError:
+                lat = str(event['data']['network']['latitude'])
+                lng = str(event['data']['network']['longitude'])
+                loc = {"tipo":"network", "latitud": lat, "longitud": lng}
+    else:
+        loc = {"error":"Configura Tu Dispositivo PorFavor"}
+        
+    droid.stopLocating()
+    return loc 
+
+droid.dialogCreateAlert("Posicion Principal","Estas en tu trabajo?")
+droid.dialogSetPositiveButtonText("Yes")
+droid.dialogSetNegativeButtonText("No")
+droid.dialogShow()
+response = droid.dialogGetResponse().result
+droid.dialogDismiss()
+
+if response.has_key("which"):
+    result=response["which"]
+    if result=="positive":
+        locacion1 = getLocation()
+        droid.ttsSpeak("locacion 1 guardada")
+    elif result=="negative":
+        droid.ttsSpeak("ponte a trabajar")
+
+time.sleep(1200)
+
+locacion2 = getLocation()
+droid.ttsSpeak("locacion 2 guardada")
+
+
+lat1 = float(locacion1["latitud"])
+lon1 = float(locacion1["longitud"])
+lat2 = float(locacion2["latitud"])
+lon2 = float(locacion2["longitud"])
+
+distancia = (geo_distance.distance(lat1,lon1,lat2,lon2)*1000)
+
+if distancia < 100:
+    droid.ttsSpeak("no te has movido")
+else:
+    droid.ttsSpeak("no te alejes de tu trabajo")
